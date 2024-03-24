@@ -1,11 +1,29 @@
 {% extends 'index.html' %}
 
 {% block content %}
-    <h1> Comments</h1>
-    <div style="width: 50%; margin: auto">
-        <h1> Index </h1>
-        <h1>Hello World!</h1>
-        <h2>Welcome to FlaskApp!</h2>
-        <h3>{{ results }}</h3>
+    <h1 style="text-align: center;">Results</h1>
+    <div style="width: 80%; margin: auto;">
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Link of Article</th>
+                    <th>Pub Info</th>
+                    <th>Analytical Characterizations</th>
+                    <th>Electron Microscopy Characterizations</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comment in comments %}
+                    <tr>
+                        <td>{{ comment.title }}</td>
+                        <td><a class="link-text" href="{{ comment.link }}">{{ comment.publisher }}</a></td>
+                        <td>{{ comment.pub_year }}</td>
+                        <!-- TODO <td><img src="{{ comment.analytical_characterizations }}" alt="Analytical Characterization Image"></td>-->
+
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 {% endblock %}

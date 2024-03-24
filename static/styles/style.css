@@ -38,3 +38,53 @@ button {
 button:hover {
     background-color: #0067cc;
 }
+
+
+
+/* Apply some basic styles to the table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background-color: #f2f2f2;
+    padding: 8px;
+    text-align: left;
+}
+
+/* Style the table rows */
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* Style the table data cells */
+td {
+    padding: 8px;
+}
+
+/* Center align the text in the header */
+th, td {
+    text-align: center;
+}
+td:nth-child(1) {
+    width: 400px; /* Adjust the width as needed */
+    max-width: 100px; /* Ensure the width doesn't exceed this value */
+}
+
+/* Set a smaller width for the link column */
+td:nth-child(2) {
+    width: 100px; /* Adjust the width as needed */
+    max-width: 100px; /* Ensure the width doesn't exceed this value */
+}
+td:nth-child(3) {
+    width: 100px; /* Adjust the width as needed */
+    max-width: 100px; /* Ensure the width doesn't exceed this value */
+}
+.link-text {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

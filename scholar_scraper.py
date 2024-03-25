@@ -1,7 +1,9 @@
 from bs4 import BeautifulSoup
 import requests
 import json
-
+import re
+from scidownl import scihub_download
+from scidownl import config
 
 def google_scholar_pagination(query):
     data = []
@@ -50,16 +52,19 @@ def google_scholar_pagination(query):
     # print(json.dumps(data, indent=2, ensure_ascii=False))
     return data
 
+API_KEY = 'YOUR_API_KEY'
+
+
 
 def write_to_file(data):
-    with open('links.txt', 'w') as filehandle:
+    with open('./tempArticles/links.txt', 'w') as filehandle:
         for listitem in data:
             filehandle.write(f'{listitem}\n')
 
 
 def read_from_file():
     places = []
-    with open('links.txt', 'r') as filehandle:
+    with open('./tempArticles/links.txt', 'r') as filehandle:
         for line in filehandle:
             curr_place = line[:-1]
             places.append(curr_place)
@@ -70,7 +75,7 @@ def doaj_request(query):
     page_number = 1
     data = []
     response = requests.get(f"https://doaj.org/api/search/articles/{query}?page=" +
-                            str(page_number) + "&pageSize=100")
+                            str(page_number) + "&pageSize=10")
     my_json = response.content.decode('utf8')
     json_data = json.loads("[" + my_json.rstrip().replace("\n", ",") + "]")
     try:
@@ -90,6 +95,67 @@ def doaj_request(query):
     return data
 
 
+def image_of_articles(results):
+
+    for result in results:
+        result['pic_links'] = []
+        url = result["link"]
+        response = ''
+        try:
+            response = requests.get(
+                url='https://proxy.scrapeops.io/v1/',
+                params={
+                    'api_key': '29c53436-dde6-417b-942d-ac9d9736644b',
+                    'url': url,
+                    'render_js': 'true',
+                    'residential': 'true',
+                    'country': 'us'
+                },
+            )
+            url = response.url
+        except:
+            pass
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, features="html.parser")
+            images = soup.find_all('img')
+            for img in images:
+                for attr in ['src', 'data-src', 'data-original', 'data-srcset', 'data-lazy', 'data-large']:
+                    img_src = img.get(attr)
+                    if img_src:
+                        img_url = requests.compat.urljoin(url, img_src)
+                        result['pic_links'].append(img_url)
+                        break
+
+
+            # for img_url in range(len(image_urls)):
+            #     filename = re.search(r'/([\w_-]+[.](jpg|gif|png|jpeg))$', image_urls[img_url])
+            #     if not filename:
+            #         print("Regex didn't match with the url: {}".format(url))
+            #         continue
+            #     filename = filename.group(1).split('.')
+            #     with open(f'./tempArticles/{counter}_{filename[0]}.{filename[1]}', 'wb') as f:
+            #         response = requests.get(image_urls[img_url])
+            #         f.write(response.content)
+            #         counter += 1
+
+    return results
+
+
+def link_extractor(results):
+    links = []
+    for result in results:
+        links.append(result['link'])
+    return links
+
+
+def download_articles(results):
+    counter = 0
+    links = link_extractor(results)
+    for i in range(len(links)):
+        scihub_download(links[i], out='./tempArticles/' + str(i) + '.pdf')
+        counter += 1
+
+
 if __name__ == '__main__':
     # data = read_from_file()
     # data = google_scholar_pagination(data,'silver nanoparticles')
@@ -99,4 +165,3 @@ if __name__ == '__main__':
     #     scihub_download(data[i], out='./articles/' + str(i) + '.pdf')
     data = doaj_request('silver nanoparticles')
     print(data)
-

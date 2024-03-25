@@ -19,8 +19,12 @@
                         <td>{{ comment.title }}</td>
                         <td><a class="link-text" href="{{ comment.link }}">{{ comment.publisher }}</a></td>
                         <td>{{ comment.pub_year }}</td>
-                        <!-- TODO <td><img src="{{ comment.analytical_characterizations }}" alt="Analytical Characterization Image"></td>-->
 
+                        <td>
+                            {% for pic in comment.pic_links %}
+                                <img src="{{ pic }}" alt="Analytical Characterization Image" style="max-width: 100%; max-height: 100%;"><br>
+                            {% endfor %}
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>

@@ -1,9 +1,11 @@
 from bs4 import BeautifulSoup
 import requests
 import json
-import re
+import threading
+
 from scidownl import scihub_download
 from scidownl import config
+
 
 def google_scholar_pagination(query):
     data = []
@@ -52,8 +54,8 @@ def google_scholar_pagination(query):
     # print(json.dumps(data, indent=2, ensure_ascii=False))
     return data
 
-API_KEY = 'YOUR_API_KEY'
 
+API_KEY = 'YOUR_API_KEY'
 
 
 def write_to_file(data):
@@ -95,52 +97,95 @@ def doaj_request(query):
     return data
 
 
-def image_of_articles(results):
+def image_of_articles(result, results_list):
+    # result['pic_links'] = []
+    # url = result["link"]
+    # response = ''
+    # try:
+    # #     response = requests.get(
+    # #         url='https://proxy.scrapeops.io/v1/',
+    # #         params={
+    # #             'api_key': '29c53436-dde6-417b-942d-ac9d9736644b',
+    # #             'url': url,
+    # #             'render_js': 'true',
+    # #             'residential': 'true',
+    # #             'country': 'us',
+    # #             'timeout': 30
+    # #         },
+    # #     )
+    #     response = requests.get(url, stream=True, timeout=30, verify=True, allow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'})
+    #     url = response.url
+    #     if response.status_code == 200:
+    #         soup = BeautifulSoup(response.text, features="html.parser")
+    #         images = soup.find_all('img')
+    #         for img in images:
+    #             for attr in ['src', 'data-src', 'data-original', 'data-srcset', 'data-lazy', 'data-large']:
+    #                 img_src = img.get(attr)
+    #                 if img_src:
+    #                     img_url = requests.compat.urljoin(url, img_src)
+    #                     result['pic_links'].append(img_url)
+    #                     break
+    # except requests.Timeout:
+    #     print("Request timed out. Moving to the next request...")
+    #     # for img_url in range(len(image_urls)):
+    #     #     filename = re.search(r'/([\w_-]+[.](jpg|gif|png|jpeg))$', image_urls[img_url])
+    #     #     if not filename:
+    #     #         print("Regex didn't match with the url: {}".format(url))
+    #     #         continue
+    #     #     filename = filename.group(1).split('.')
+    #     #     with open(f'./tempArticles/{counter}_{filename[0]}.{filename[1]}', 'wb') as f:
+    #     #         response = requests.get(image_urls[img_url])
+    #     #         f.write(response.content)
+    #     #         counter += 1
+    # return result
+    result['pic_links'] = []
+    url = result["link"]
+    response = ''
+    try:
+        # response = requests.get(
+        #     url='https://proxy.scrapeops.io/v1/',
+        #     params={
+        #         'api_key': '29c53436-dde6-417b-942d-ac9d9736644b',
+        #         'url': url,
+        #         'render_js': 'true',
+        #         'residential': 'true',
+        #         'country': 'us',
+        #         'timeout': 20
+        #     },
+        # )
+        response = requests.get(url, stream=True, timeout=30, verify=True, allow_redirects=True,
+                                headers={'User-Agent': 'Mozilla/5.0'})
+        url = response.url
 
+    except requests.Timeout:
+        print("Request timed out. Moving to the next request...")
+        return
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, features="html.parser")
+        images = soup.find_all('img')
+        for img in images:
+            for attr in ['src', 'data-src', 'data-original', 'data-srcset', 'data-lazy', 'data-large']:
+                img_src = img.get(attr)
+                if img_src:
+                    img_url = requests.compat.urljoin(url, img_src)
+                    result['pic_links'].append(img_url)
+                    break
+
+    results_list.append(result)
+
+def get_pic_links_concurrently(results):
+    results_list = []
+    threads = []
     for result in results:
-        result['pic_links'] = []
-        url = result["link"]
-        response = ''
-        try:
-            response = requests.get(
-                url='https://proxy.scrapeops.io/v1/',
-                params={
-                    'api_key': '29c53436-dde6-417b-942d-ac9d9736644b',
-                    'url': url,
-                    'render_js': 'true',
-                    'residential': 'true',
-                    'country': 'us'
-                },
-            )
-            url = response.url
-        except:
-            pass
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, features="html.parser")
-            images = soup.find_all('img')
-            for img in images:
-                for attr in ['src', 'data-src', 'data-original', 'data-srcset', 'data-lazy', 'data-large']:
-                    img_src = img.get(attr)
-                    if img_src:
-                        img_url = requests.compat.urljoin(url, img_src)
-                        result['pic_links'].append(img_url)
-                        break
+        thread = threading.Thread(target=image_of_articles, args=(result, results_list))
+        threads.append(thread)
+        thread.start()
 
+    for thread in threads:
+        thread.join()
 
-            # for img_url in range(len(image_urls)):
-            #     filename = re.search(r'/([\w_-]+[.](jpg|gif|png|jpeg))$', image_urls[img_url])
-            #     if not filename:
-            #         print("Regex didn't match with the url: {}".format(url))
-            #         continue
-            #     filename = filename.group(1).split('.')
-            #     with open(f'./tempArticles/{counter}_{filename[0]}.{filename[1]}', 'wb') as f:
-            #         response = requests.get(image_urls[img_url])
-            #         f.write(response.content)
-            #         counter += 1
-
-    return results
-
-
+    return results_list
 def link_extractor(results):
     links = []
     for result in results:

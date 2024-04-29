@@ -22,8 +22,8 @@ def process_keywords(keywords):
     keywords = keywords.lower()
     results = scholar_scraper.doaj_request(keywords)
     # scholar_scraper.download_articles(results)
-    # results = scholar_scraper.get_pic_links_concurrently(results)
-    results = scholar_scraper.image_of_articles_test(results)
+    results = scholar_scraper.get_pic_links_concurrently(results)
+    # results = scholar_scraper.image_of_articles_test(results[:5])
     return results
 
 

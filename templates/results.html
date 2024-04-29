@@ -9,25 +9,58 @@
                     <th>Title</th>
                     <th>Link of Article</th>
                     <th>Pub Info</th>
+{#                    <th>RamanShift and FT-IR</th>#}
+{#                    <th>XRD</th>#}
+{#                    <th>UV-Vis</th>#}
+{#                    <th>Other Analytical Characterizations</th>#}
                     <th>Analytical Characterizations</th>
                     <th>Electron Microscopy Characterizations</th>
                 </tr>
             </thead>
             <tbody>
-                {% for comment in comments %}
-                    <tr>
-                        <td>{{ comment.title }}</td>
-                        <td><a class="link-text" href="{{ comment.link }}">{{ comment.publisher }}</a></td>
-                        <td>{{ comment.pub_year }}</td>
-
-                        <td>
-                            {% for pic in comment.pic_links %}
-                                <img src="{{ pic }}" alt="Analytical Characterization Image" style="max-width: 100%; max-height: 100%;"><br>
-                            {% endfor %}
-                        </td>
-                    </tr>
+    {% for comment in comments %}
+        <tr>
+            <td>{{ comment.title }}</td>
+            <td><a class="link-text" href="{{ comment.link }}">{{ comment.publisher }}</a></td>
+            <td>{{ comment.pub_year }}</td>
+{#            <td>#}
+{#                {% for pic, class_prediction in comment.pic_links %}#}
+{#                    {% if 'Raman' in class_prediction %}#}
+{#                        <img src="{{ pic }}" alt="Analytical Characterization Image" style="max-width: 100%; max-height: 100%;"><br>#}
+{#                    {% endif %}#}
+{#                {% endfor %}#}
+{#            </td>#}
+{#            <td>#}
+{#                {% for pic, class_prediction in comment.pic_links %}#}
+{#                    {% if 'XRD' in class_prediction %}#}
+{#                        <img src="{{ pic }}" alt="Analytical Characterization Image" style="max-width: 100%; max-height: 100%;"><br>#}
+{#                    {% endif %}#}
+{#                {% endfor %}#}
+{#            </td>#}
+{#            <td>#}
+{#                {% for pic, class_prediction in comment.pic_links %}#}
+{#                    {% if 'UV-Vis' in class_prediction %}#}
+{#                        <img src="{{ pic }}" alt="Analytical Characterization Image" style="max-width: 100%; max-height: 100%;"><br>#}
+{#                    {% endif %}#}
+{#                {% endfor %}#}
+{#            </td>#}
+            <td>
+                {% for pic, class_prediction in comment.pic_links %}
+                    {% if class_prediction == 'Analytical' %}
+                        <img src="{{ pic }}" alt="Analytical Characterization Image" style="max-width: 100%; max-height: 100%;"><br>
+                    {% endif %}
                 {% endfor %}
-            </tbody>
+            </td>
+            <td>
+                {% for pic, class_prediction in comment.pic_links %}
+                    {% if class_prediction == 'EM' %}
+                        <img src="{{ pic }}" alt="Electron Microscopy" style="max-width: 100%; max-height: 100%;"><br>
+                    {% endif %}
+                {% endfor %}
+            </td>
+        </tr>
+    {% endfor %}
+</tbody>
         </table>
     </div>
 {% endblock %}

@@ -5,6 +5,9 @@ import threading
 from scidownl import scihub_download
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from AI_models.AI_pred_handler import predict_from_url
+from selenium.webdriver.common.by import By
+
 
 
 def google_scholar_pagination(query):
@@ -77,7 +80,7 @@ def doaj_request(query):
     page_number = 1
     data = []
     response = requests.get(f"https://doaj.org/api/search/articles/{query}?page=" +
-                            str(page_number) + "&pageSize=20")
+                            str(page_number) + "&pageSize=10")
     my_json = response.content.decode('utf8')
     json_data = json.loads("[" + my_json.rstrip().replace("\n", ",") + "]")
     try:
@@ -227,6 +230,7 @@ def image_of_articles(result, results_list):
         response = driver.page_source
         soup = BeautifulSoup(response, "html.parser")
         images = soup.find_all('img')
+        driver.close()
         for img in images:
             for attr in ['src', 'data-src', 'data-original', 'data-srcset', 'data-lazy', 'data-large']:
                 img_src = img.get(attr)
@@ -235,7 +239,18 @@ def image_of_articles(result, results_list):
                         img_url = img_src
                     else:
                         img_url = requests.compat.urljoin(url, img_src)
-                    result['pic_links'].append(img_url)
+                    # result['pic_links'].append(img_url)
+                    try:
+                        driver = webdriver.Chrome(options=chrome_options)
+                        driver.get(img_url)
+                        image_content = driver.find_element(By.TAG_NAME, 'img').screenshot_as_png
+                        driver.close()
+                        class_name = predict_from_url(image_content)
+                        # if isinstance(class_name, list) or class_name == 'EM' or class_name == 'Others':
+                        if class_name == 'Analytical' or class_name == 'EM':
+                            result['pic_links'].append((img_url, class_name))
+                    except Exception as e:
+                        print('error')
                     break
     except Exception as e:
         print('error')
@@ -257,6 +272,7 @@ def image_of_articles_test(results):
             response = driver.page_source
             soup = BeautifulSoup(response, "html.parser")
             images = soup.find_all('img')
+            driver.close()
             for img in images:
                 for attr in ['src', 'data-src', 'data-original', 'data-srcset', 'data-lazy', 'data-large']:
                     img_src = img.get(attr)
@@ -265,10 +281,22 @@ def image_of_articles_test(results):
                             img_url = img_src
                         else:
                             img_url = requests.compat.urljoin(url, img_src)
-                        result['pic_links'].append(img_url)
+                        try:
+                            driver = webdriver.Chrome(options=chrome_options)
+                            driver.get(img_url)
+                            image_content = driver.find_element(By.TAG_NAME, 'img').screenshot_as_png
+                            driver.close()
+                            class_name = predict_from_url(image_content)
+                            if isinstance(class_name, list) or class_name == 'EM':
+                                result['pic_links'].append((img_url, class_name))
+                        except Exception as e:
+                            print('error')
                         break
-        except:
-            pass
+
+
+        except Exception as e:
+            print(e)
+
 
     return results
 
